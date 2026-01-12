@@ -8,12 +8,14 @@ import (
 
 type Config struct {
 	DatabaseURL string
+	Port string
 }
 
 func LoadConfig() Config {
 	godotenv.Load()
 
 	return Config{
-		DatabaseURL: os.Getenv("DATABASE_URL"), 
+		DatabaseURL: os.Getenv("DATABASE_URL"),
+		Port: os.Getenv("PORT"),
 	}
 }
