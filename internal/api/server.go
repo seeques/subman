@@ -42,7 +42,8 @@ func (s *Server) SetupRoutes() {
 	h := handler.NewHandler(s.postgresStorage, s.cfg)
 
 	s.router.Route("/api/v1", func(r chi.Router){
-		r.Post("/subscriptions", h.Create)	
+		r.Post("/subscriptions", h.Create)
+		r.Get("/subscriptions", h.List)
 	})
 }
 
