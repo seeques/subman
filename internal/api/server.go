@@ -2,11 +2,16 @@ package api
 
 import (
 	"net/http"
+	"log/slog"
+	"context"
+	"fmt"
+	"time"
 
 	"github.com/go-chi/chi/v5"
-    // "github.com/go-chi/chi/v5/middleware"
+    "github.com/go-chi/chi/v5/middleware"
 	"github.com/seeques/test_junior/internal/config"
 	"github.com/seeques/test_junior/internal/storage"
+	"github.com/seeques/test_junior/internal/handler"
 )
 
 type Server struct {
@@ -14,6 +19,7 @@ type Server struct {
 	postgresStorage *storage.PostgresStorage
 	port string
     cfg config.Config
+	httpServer *http.Server
 }
 
 func NewServer(storage *storage.PostgresStorage, cfg config.Config) *Server {
@@ -27,8 +33,34 @@ func NewServer(storage *storage.PostgresStorage, cfg config.Config) *Server {
     return s
 }
 
-func (s *Server) SetupRoutes() {}
+func (s *Server) SetupRoutes() {
+	// middleware
+    s.router.Use(middleware.Logger)
+    s.router.Use(middleware.Recoverer) 
+    s.router.Use(middleware.RequestID) // generates unique id for request and attaches it to the context
+
+	h := handler.NewHandler(s.postgresStorage, s.cfg)
+
+	s.router.Route("/api/v1", func(r chi.Router){
+		r.Post("/subscriptions", h.Create)	
+	})
+}
 
 func (s *Server) Run() error {
-    return http.ListenAndServe(":"+s.port, s.router)
+	s.httpServer = &http.Server{
+        Addr:         fmt.Sprintf(":%s", s.cfg.Port),
+        Handler:      s.router,
+        ReadTimeout:  10 * time.Second,
+        WriteTimeout: 10 * time.Second,
+        IdleTimeout:  30 * time.Second,
+    }
+
+	slog.Info("starting HTTP server", "port", s.cfg.Port)
+
+    return s.httpServer.ListenAndServe()
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+    slog.Info("shutting down HTTP server")
+    return s.httpServer.Shutdown(ctx)
 }
