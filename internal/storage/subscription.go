@@ -38,6 +38,28 @@ func (s *PostgresStorage) CreateSubscription(ctx context.Context, sub *models.Su
 	return nil
 }
 
+func (s *PostgresStorage) GetSubscription(ctx context.Context, id int) (*models.Subscription, error) {
+	query := `SELECT id, service_name, price, user_id, start_date, end_date, created_at, updated_at
+	FROM subscription
+	WHERE id = $1`
+
+	var sub models.Subscription
+	err := s.pool.QueryRow(ctx, query, id).Scan(
+		&sub.ID,
+		&sub.ServiceName,
+		&sub.Price,
+		&sub.UserID,
+		&sub.StartDate,
+		&sub.EndDate,
+		&sub.CreatedAt,
+		&sub.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("get subscription: %w", err)
+	}
+	return &sub, nil
+}
+
 func (s *PostgresStorage) ListAllSubscriptions(ctx context.Context, params ListParams) (*ListResult, error) {
 	// limit = 10
 	// 1st page: offset = 0
@@ -49,7 +71,7 @@ func (s *PostgresStorage) ListAllSubscriptions(ctx context.Context, params ListP
 	countQuery := `SELECT COUNT(*) FROM subscription`
 	err := s.pool.QueryRow(ctx, countQuery).Scan(&total)
 	if err != nil {
-		return nil, fmt.Errorf("count subscriptions: %v", err)
+		return nil, fmt.Errorf("count subscriptions: %w", err)
 	}
 
 	// Get page

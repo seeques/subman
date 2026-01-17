@@ -6,16 +6,15 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-
+	"errors"
+	
 	"github.com/google/uuid"
+	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/seeques/test_junior/internal/models"
 	"github.com/seeques/test_junior/internal/response"
 	"github.com/seeques/test_junior/internal/storage"
 )
-
-func parseMonthYear(s string) (time.Time, error) {
-	return time.Parse("01-2006", s)
-}
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	var req SubscriptionRequest
@@ -102,6 +101,29 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:   sub.CreatedAt,
 		UpdatedAt:   sub.UpdatedAt,
 	})
+}
+
+func (h *Handler) GetById(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		response.RespondError(w, http.StatusBadRequest, "invalid id")
+        return
+	}
+
+	sub, err := h.storage.GetSubscription(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			response.RespondError(w, http.StatusNotFound, "subbscription not found")
+			return
+		}
+		slog.Error("failed to get subscription", "error", err, "id", id)
+		response.RespondError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+
+	response.RespondJSON(w, http.StatusOK, toSubscriptionResponse(sub))
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
