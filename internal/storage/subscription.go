@@ -2,9 +2,11 @@ package storage
 
 import (
 	"context"
+	"time"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/google/uuid"
 	"github.com/seeques/test_junior/internal/models"
 )
 
@@ -16,6 +18,13 @@ type ListParams struct {
 type ListResult struct {
 	Subscriptions []models.Subscription
 	Total         int
+}
+
+type TotalCostParams struct {
+    StartPeriod time.Time
+    EndPeriod   time.Time
+    UserID      *uuid.UUID
+    ServiceName string
 }
 
 func (s *PostgresStorage) CreateSubscription(ctx context.Context, sub *models.Subscription) error {
@@ -95,6 +104,54 @@ func (s *PostgresStorage) DeleteSubscription(ctx context.Context, id int)  error
     }
 
 	return nil
+}
+
+func (s *PostgresStorage) GetSubscriptionsForPeriod(ctx context.Context, params TotalCostParams) ([]models.Subscription, error) {
+	// start_date <= end_period ($2) and end_date >= start_period ($1)
+	query := `SELECT id, service_name, price, user_id, start_date, end_date, created_at, updated_at
+	FROM subscription
+	WHERE start_date <= $2 AND (end_date >= $1 OR end_date IS NULL)`
+
+	args := []interface{}{params.StartPeriod, params.EndPeriod}
+	argNum := 3
+
+	if params.UserID != nil {
+		query += fmt.Sprintf(" AND user_id = $%d", argNum)
+		args = append(args, *params.UserID)
+		argNum++
+	}
+
+	if params.ServiceName != "" {
+		query += fmt.Sprintf(" AND service_name = $%d", argNum)
+		args = append(args, params.ServiceName)
+		argNum++
+	}
+
+	rows, err := s.pool.Query(ctx, query, args...)
+	if err != nil {
+        return nil, fmt.Errorf("get subscriptions for period: %w", err)
+    }
+    defer rows.Close()
+
+	var subs []models.Subscription
+	for rows.Next() {
+		var sub models.Subscription
+		err := rows.Scan(
+			&sub.ID,
+            &sub.ServiceName,
+            &sub.Price,
+            &sub.UserID,
+            &sub.StartDate,
+            &sub.EndDate,
+            &sub.CreatedAt,
+            &sub.UpdatedAt,
+		)
+		if err != nil {
+            return nil, fmt.Errorf("scan subscription: %w", err)
+        }
+		subs = append(subs, sub)
+	}
+	return subs, rows.Err()
 }
 
 func (s *PostgresStorage) ListAllSubscriptions(ctx context.Context, params ListParams) (*ListResult, error) {

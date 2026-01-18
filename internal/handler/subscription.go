@@ -270,3 +270,75 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 }
+
+func (h *Handler) TotalCost(w http.ResponseWriter, r *http.Request) {
+	// Parse required params
+    startPeriodStr := r.URL.Query().Get("start_period")
+    endPeriodStr := r.URL.Query().Get("end_period")
+
+    if startPeriodStr == "" || endPeriodStr == "" {
+        response.RespondError(w, http.StatusBadRequest, "start_period and end_period are required")
+        return
+    }
+
+    startPeriod, err := parseMonthYear(startPeriodStr)
+    if err != nil {
+        response.RespondError(w, http.StatusBadRequest, "invalid start_period, expected MM-YYYY")
+        return
+    }
+
+    endPeriod, err := parseMonthYear(endPeriodStr)
+    if err != nil {
+        response.RespondError(w, http.StatusBadRequest, "invalid end_period, expected MM-YYYY")
+        return
+    }
+
+    if endPeriod.Before(startPeriod) {
+        response.RespondError(w, http.StatusBadRequest, "end_period must be after start_period")
+        return
+    }
+
+    // Parse optional filters
+    params := storage.TotalCostParams{
+        StartPeriod: startPeriod,
+        EndPeriod:   endPeriod,
+    }
+
+    if userIDStr := r.URL.Query().Get("user_id"); userIDStr != "" {
+        userID, err := uuid.Parse(userIDStr)
+        if err != nil {
+            response.RespondError(w, http.StatusBadRequest, "invalid user_id format")
+            return
+        }
+        params.UserID = &userID
+    }
+
+    params.ServiceName = r.URL.Query().Get("service_name")
+
+    // Get subscriptions for period
+    ctx := r.Context()
+    subs, err := h.storage.GetSubscriptionsForPeriod(ctx, params)
+    if err != nil {
+        slog.Error("failed to get subscriptions", "error", err)
+        response.RespondError(w, http.StatusInternalServerError, "internal error")
+        return
+    }
+
+	// Calculate total cost of subscription
+    total := calculateTotalCost(subs, startPeriod, endPeriod)
+
+    slog.Info("total cost calculated",
+        "start_period", startPeriodStr,
+        "end_period", endPeriodStr,
+        "subscriptions_count", len(subs),
+        "total_cost", total,
+    )
+
+    response.RespondJSON(w, http.StatusOK, map[string]interface{}{
+        "total_cost":          total,
+        "currency":            "RUB",
+        "period_start":        startPeriodStr,
+        "period_end":          endPeriodStr,
+        "subscriptions_count": len(subs),
+    })
+}

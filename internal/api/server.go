@@ -43,6 +43,7 @@ func (s *Server) SetupRoutes() {
 
 	s.router.Route("/api/v1", func(r chi.Router){
 		r.Post("/subscriptions", h.Create)
+		r.Get("/subscriptions/total-cost", h.TotalCost)
 		r.Get("/subscriptions/{id}", h.GetById)
 		r.Put("/subscriptions/{id}", h.Update)
 		r.Delete("/subscriptions/{id}", h.Delete)

@@ -27,3 +27,36 @@ func toSubscriptionResponse(sub *models.Subscription) SubscriptionResponse {
         UpdatedAt:   sub.UpdatedAt,
     }
 }
+
+func countMonths(start, end time.Time) int {
+    years := end.Year() - start.Year()
+    months := int(end.Month()) - int(start.Month())
+    return years*12 + months + 1  // +1 because inclusive
+}
+
+func calculateTotalCost(subs []models.Subscription, startPeriod, endPeriod time.Time) int {
+    total := 0
+
+    for _, sub := range subs {
+        // Find if startPeriod overlaps with the startDate
+        overlapStart := sub.StartDate
+        if startPeriod.After(overlapStart) {
+            overlapStart = startPeriod
+        }
+
+        // Find if endDate overlaps with the endPeriod
+        overlapEnd := endPeriod
+        if sub.EndDate != nil && sub.EndDate.Before(overlapEnd) {
+            overlapEnd = *sub.EndDate
+        }
+
+        if overlapStart.After(overlapEnd) {
+            continue
+        }
+
+        months := countMonths(overlapStart, overlapEnd)
+        total += months * sub.Price
+    }
+
+    return total
+}
