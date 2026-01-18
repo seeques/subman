@@ -44,6 +44,7 @@ func (s *Server) SetupRoutes() {
 	s.router.Route("/api/v1", func(r chi.Router){
 		r.Post("/subscriptions", h.Create)
 		r.Get("/subscriptions/{id}", h.GetById)
+		r.Put("/subscriptions/{id}", h.Update)
 		r.Get("/subscriptions", h.List)
 	})
 }

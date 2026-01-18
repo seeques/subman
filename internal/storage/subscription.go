@@ -60,6 +60,27 @@ func (s *PostgresStorage) GetSubscription(ctx context.Context, id int) (*models.
 	return &sub, nil
 }
 
+func (s *PostgresStorage) UpdateSubscription(ctx context.Context, sub *models.Subscription) error {
+	query := `UPDATE subscription SET service_name = $1, price = $2, user_id = $3, start_date = $4, end_date = $5, updated_at = NOW()
+	WHERE id = $6
+	RETURNING id, service_name, price, user_id, start_date, end_date, created_at, updated_at`
+
+	err := s.pool.QueryRow(ctx, query, sub.ServiceName, sub.Price, sub.UserID, sub.StartDate, sub.EndDate, sub.ID).Scan(
+		&sub.ID,
+		&sub.ServiceName,
+		&sub.Price,
+		&sub.UserID,
+		&sub.StartDate,
+		&sub.EndDate,
+		&sub.CreatedAt,
+		&sub.UpdatedAt,
+	)
+	if err != nil {
+		fmt.Errorf("update subscription: %w", err)
+	}
+	return nil
+}
+
 func (s *PostgresStorage) ListAllSubscriptions(ctx context.Context, params ListParams) (*ListResult, error) {
 	// limit = 10
 	// 1st page: offset = 0

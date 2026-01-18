@@ -126,6 +126,82 @@ func (h *Handler) GetById(w http.ResponseWriter, r *http.Request) {
 	response.RespondJSON(w, http.StatusOK, toSubscriptionResponse(sub))
 }
 
+func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		response.RespondError(w, http.StatusBadRequest, "invalid id")
+        return
+	}
+
+	var req SubscriptionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		slog.Warn("invalid JSON in request body", "error", err)
+        response.RespondError(w, http.StatusBadRequest, "invalid JSON")
+        return
+	}
+
+	// Validation
+	if req.Price <= 0 {
+		response.RespondError(w, http.StatusBadRequest, "price must be more than zero")
+		return
+	}
+
+	if req.ServiceName == "" || req.UserID == "" || req.StartDate == "" {
+		response.RespondError(w, http.StatusBadRequest, "request field is empty")
+		return
+	}
+
+	// Parse uuid
+	userID, err := uuid.Parse(req.UserID)
+	if err != nil {
+		response.RespondError(w, http.StatusBadRequest, "invalid user_id, must be UUID")
+		return
+	}
+
+	// Parse dates to check if they match MM-YYYY format
+	startDate, err := parseMonthYear(req.StartDate)
+	if err != nil {
+		response.RespondError(w, http.StatusBadRequest, "invalid start_date, expected MM-YYYY")
+		return
+	}
+
+	var endDate *time.Time
+	if req.EndDate != "" {
+		parsed, err := parseMonthYear(req.EndDate)
+		if err != nil {
+			response.RespondError(w, http.StatusBadRequest, "invalid end_date, expected MM-YYYY")
+			return
+		}
+		endDate = &parsed
+	}
+
+	// model for database call
+	sub := &models.Subscription{
+        ID:          id,
+        ServiceName: req.ServiceName,
+        Price:       req.Price,
+        UserID:      userID,
+        StartDate:   startDate,
+        EndDate:     endDate,
+    }
+
+	if err := h.storage.UpdateSubscription(r.Context(), sub); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			response.RespondError(w, http.StatusNotFound, "subscription not found")
+            return
+		}
+		slog.Error("failed to update subscription", "error", err, "id", id)
+        response.RespondError(w, http.StatusInternalServerError, "internal error")
+        return
+	}
+
+	slog.Info("subscription updated", "id", sub.ID)
+
+	response.RespondJSON(w, http.StatusOK, toSubscriptionResponse(sub))
+}
+
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 
