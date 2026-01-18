@@ -9,7 +9,6 @@ import (
 	"time"
 	"os/signal"
 	"net/http"
-	// "github.com/rs/zerolog/log"
 	"github.com/seeques/test_junior/internal/api"
 	"github.com/seeques/test_junior/internal/config"
 	"github.com/seeques/test_junior/internal/storage"
