@@ -202,6 +202,31 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	response.RespondJSON(w, http.StatusOK, toSubscriptionResponse(sub))
 }
 
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		response.RespondError(w, http.StatusBadRequest, "invalid id")
+        return
+	}
+
+	ctx := r.Context()
+    if err := h.storage.DeleteSubscription(ctx, id); err != nil {
+        if errors.Is(err, pgx.ErrNoRows) {
+            response.RespondError(w, http.StatusNotFound, "subscription not found")
+            return
+        }
+        slog.Error("failed to delete subscription", "error", err, "id", id)
+        response.RespondError(w, http.StatusInternalServerError, "internal error")
+        return
+    }
+
+    slog.Info("subscription deleted", "id", id)
+
+    w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 

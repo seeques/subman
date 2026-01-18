@@ -45,6 +45,7 @@ func (s *Server) SetupRoutes() {
 		r.Post("/subscriptions", h.Create)
 		r.Get("/subscriptions/{id}", h.GetById)
 		r.Put("/subscriptions/{id}", h.Update)
+		r.Delete("/subscriptions/{id}", h.Delete)
 		r.Get("/subscriptions", h.List)
 	})
 }

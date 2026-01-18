@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/seeques/test_junior/internal/models"
 )
 
@@ -78,6 +79,21 @@ func (s *PostgresStorage) UpdateSubscription(ctx context.Context, sub *models.Su
 	if err != nil {
 		fmt.Errorf("update subscription: %w", err)
 	}
+	return nil
+}
+
+func (s *PostgresStorage) DeleteSubscription(ctx context.Context, id int)  error {
+	query := `DELETE FROM subscription WHERE id = $1`
+
+	result, err := s.pool.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("delete subscription", err)
+	}
+
+	if result.RowsAffected() == 0 {
+        return pgx.ErrNoRows
+    }
+
 	return nil
 }
 
