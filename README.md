@@ -43,7 +43,16 @@ REST API for aggregating user subscription data. Built with Go.
 
 - Go 1.25+
 - Docker and Docker Compose
-- Make (optional)
+
+### Configuration
+
+1. Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+2. (Optional) Modify `.env` with your own values.
 
 ### Run with Docker (Recommended)
 
@@ -60,26 +69,31 @@ docker compose down
 
 ### Run Locally
 
-1. Start PostgreSQL:
+1. Copy environment file:
+
+```bash
+cp .env.example .env
+```
+
+2. Update `.env` for local development:
+
+```env
+DATABASE_URL=postgres://subscription:subscription@localhost:5436/subscription?sslmode=disable
+```
+
+3. Start PostgreSQL:
 
 ```bash
 docker compose up -d postgres
 ```
 
-2. Run migrations:
+4. Run migrations:
 
 ```bash
 migrate -path ./migrations -database "postgres://subscription:subscription@localhost:5436/subscription?sslmode=disable" up
 ```
 
-3. Create `.env` file:
-
-```env
-DATABASE_URL=postgres://subscription:subscription@localhost:5436/subscription?sslmode=disable
-PORT=8080
-```
-
-4. Run the application:
+5. Run the application:
 
 ```bash
 go run main.go
