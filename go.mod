@@ -1,4 +1,4 @@
-module github.com/seeques/test_junior
+module github.com/seeques/subman
 
 go 1.25.3
 

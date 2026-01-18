@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/seeques/test_junior/internal/config"
+	"github.com/seeques/subman/internal/config"
 )
 
 type PostgresStorage struct {

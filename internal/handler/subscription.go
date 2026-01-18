@@ -11,9 +11,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/seeques/test_junior/internal/models"
-	"github.com/seeques/test_junior/internal/response"
-	"github.com/seeques/test_junior/internal/storage"
+	"github.com/seeques/subman/internal/models"
+	"github.com/seeques/subman/internal/response"
+	"github.com/seeques/subman/internal/storage"
 )
 
 // Create godoc

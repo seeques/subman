@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/google/uuid"
-	"github.com/seeques/test_junior/internal/models"
+	"github.com/seeques/subman/internal/models"
 )
 
 type ListParams struct {

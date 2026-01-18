@@ -9,9 +9,9 @@ import (
 	"time"
 	"os/signal"
 	"net/http"
-	"github.com/seeques/test_junior/internal/api"
-	"github.com/seeques/test_junior/internal/config"
-	"github.com/seeques/test_junior/internal/storage"
+	"github.com/seeques/subman/internal/api"
+	"github.com/seeques/subman/internal/config"
+	"github.com/seeques/subman/internal/storage"
 )
 
 // @title Subscription Service API

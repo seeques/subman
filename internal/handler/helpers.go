@@ -3,7 +3,7 @@ package handler
 import (
 	"time"
 
-	"github.com/seeques/test_junior/internal/models"
+	"github.com/seeques/subman/internal/models"
 )
 
 func parseMonthYear(s string) (time.Time, error) {

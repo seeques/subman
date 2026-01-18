@@ -3,8 +3,8 @@ package handler
 import (
 	"time"
 
-	"github.com/seeques/test_junior/internal/config"
-	"github.com/seeques/test_junior/internal/storage"
+	"github.com/seeques/subman/internal/config"
+	"github.com/seeques/subman/internal/storage"
 )
 
 type Handler struct {
