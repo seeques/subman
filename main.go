@@ -15,6 +15,13 @@ import (
 	"github.com/seeques/test_junior/internal/storage"
 )
 
+// @title Subscription Service API
+// @version 1.0
+// @description REST API for managing user subscriptions
+
+// @host localhost:8080
+// @BasePath /api/v1
+
 func main() {
 	cfg := config.LoadConfig()
 

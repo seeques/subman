@@ -12,6 +12,9 @@ import (
 	"github.com/seeques/test_junior/internal/config"
 	"github.com/seeques/test_junior/internal/storage"
 	"github.com/seeques/test_junior/internal/handler"
+
+	_ "github.com/seeques/test_junior/docs"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type Server struct {
@@ -41,13 +44,15 @@ func (s *Server) SetupRoutes() {
 
 	h := handler.NewHandler(s.postgresStorage, s.cfg)
 
+	s.router.Get("/swagger/*", httpSwagger.WrapHandler)
+
 	s.router.Route("/api/v1", func(r chi.Router){
 		r.Post("/subscriptions", h.Create)
+		r.Get("/subscriptions", h.List)
 		r.Get("/subscriptions/total-cost", h.TotalCost)
 		r.Get("/subscriptions/{id}", h.GetById)
 		r.Put("/subscriptions/{id}", h.Update)
 		r.Delete("/subscriptions/{id}", h.Delete)
-		r.Get("/subscriptions", h.List)
 	})
 }
 
